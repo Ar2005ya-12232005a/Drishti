@@ -1,0 +1,222 @@
+"""Shared look for every DRISHTI web page (server.py and cgi-bin/status.py).
+The CSS is inlined so a downloaded HTML file still looks right offline."""
+import html
+
+CSS = """
+:root{
+  --green:#1D4533; --cream:#F7EAE0; --ink:#1D4533;
+  --muted:#5E7667; --line:#E3D2C3; --alert:#9E3524;
+  --soft:rgba(247,234,224,.78); --edge:rgba(247,234,224,.28);
+}
+*{box-sizing:border-box; border-radius:0}
+html{scroll-behavior:smooth}
+body{
+  margin:0; min-height:100vh; background:var(--green); color:var(--cream);
+  font:17px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;
+}
+.wrap{max-width:1040px; margin:0 auto; padding:0 24px}
+a{color:inherit; text-underline-offset:3px}
+
+/* header */
+.top{border-bottom:1px solid var(--edge)}
+.top .wrap{display:flex; justify-content:space-between; align-items:center; padding-top:18px; padding-bottom:18px}
+.mark{
+  font:700 22px/1 Palatino,"Palatino Linotype","Book Antiqua",Georgia,serif;
+  letter-spacing:.16em; text-decoration:none; color:var(--cream);
+}
+.top nav{display:flex; gap:26px; font-size:15px}
+.top nav a{text-decoration:none; color:var(--soft)}
+.top nav a:hover{color:var(--cream); text-decoration:underline}
+
+/* hero */
+.hero{padding:72px 0 56px}
+.hero h1{
+  margin:0; font:700 clamp(56px,14vw,150px)/.95 Palatino,"Palatino Linotype","Book Antiqua",Georgia,serif;
+  letter-spacing:.04em;
+}
+.deva{margin:14px 0 0; font-size:22px; color:var(--soft)}
+.caption{
+  margin:30px 0 12px; max-width:20ch;
+  font:italic 400 clamp(28px,5vw,44px)/1.15 Palatino,"Palatino Linotype",Georgia,serif;
+}
+.lede{margin:0; max-width:56ch; color:var(--soft)}
+.cta{
+  display:inline-block; margin-top:28px; padding:13px 26px; text-decoration:none;
+  background:var(--cream); color:var(--green); font-weight:700;
+  box-shadow:6px 6px 0 rgba(0,0,0,.28);
+}
+.cta:hover{background:#fff4ea}
+
+/* text band */
+.band{background:var(--cream); color:var(--green); border-block:1px solid var(--green); overflow:hidden}
+.band p{
+  margin:0; padding:14px 0; white-space:nowrap; text-align:center;
+  font:700 18px/1 Palatino,"Palatino Linotype",Georgia,serif; letter-spacing:.06em;
+}
+
+/* sections */
+section{padding:64px 0 0}
+h2{margin:0 0 8px; font:700 clamp(28px,4vw,38px)/1.15 Palatino,"Palatino Linotype",Georgia,serif}
+.intro{margin:0 0 30px; max-width:58ch; color:var(--soft)}
+.grid{display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.tile{background:var(--cream); color:var(--ink); padding:26px 26px 24px; box-shadow:6px 6px 0 rgba(0,0,0,.25)}
+.tile h3{margin:0 0 8px; font:700 21px/1.25 Palatino,"Palatino Linotype",Georgia,serif}
+.tile p{margin:0; font-size:16px}
+.steps{display:grid; gap:0; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); border:1px solid var(--edge)}
+.step{padding:24px; border-right:1px solid var(--edge)}
+.step b{display:block; font:700 34px/1 Palatino,Georgia,serif; margin-bottom:12px}
+.step h3{margin:0 0 6px; font-size:18px}
+.step p{margin:0; font-size:15.5px; color:var(--soft)}
+
+/* search card */
+.finder{padding:72px 0 80px}
+.card{
+  background:var(--cream); color:var(--ink); padding:32px 34px 26px;
+  max-width:560px; box-shadow:10px 10px 0 rgba(0,0,0,.28);
+}
+.card h2{margin-bottom:4px}
+.sub{margin:0 0 20px; color:var(--muted); font-size:15px}
+form{display:flex; gap:0; margin-top:4px}
+input[type=text]{
+  flex:1; min-width:0; padding:13px 14px; font:inherit; color:var(--ink);
+  background:#fffaf5; border:2px solid var(--ink); border-right:0;
+}
+button{
+  padding:13px 24px; font:inherit; font-weight:700; cursor:pointer;
+  background:var(--green); color:var(--cream); border:2px solid var(--green);
+}
+button:hover{background:#2B5C45}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #E0A458; outline-offset:2px}
+
+/* result card */
+.result{padding-top:56px; padding-bottom:72px}
+.result .card h1{margin:0 0 4px; font:700 32px/1.2 Palatino,"Palatino Linotype",Georgia,serif}
+.pill{display:inline-block; padding:3px 14px; margin-bottom:10px; font-size:14px; font-weight:700; border:2px solid var(--ink)}
+.pill.done{background:var(--green); color:var(--cream)}
+.pill.missed{border-color:var(--alert); color:var(--alert)}
+dl{margin:0}
+.row{display:flex; justify-content:space-between; gap:20px; padding:11px 0; border-top:1px solid var(--line)}
+dt{color:var(--muted); font-size:15px}
+dd{margin:0; font-weight:700; text-align:right}
+dd.late{color:var(--alert)}
+.note{margin:18px 0 0; font-size:13px; color:var(--muted)}
+a.back{display:inline-block; margin-top:16px; color:var(--ink); font-weight:700}
+
+/* footer */
+.foot{border-top:1px solid var(--edge); padding:22px 0 30px; font-size:14px; color:var(--soft)}
+.foot .wrap{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+
+@media (max-width:560px){
+  .top nav{display:none}
+  .hero{padding-top:48px}
+  .card{padding:26px 22px 22px}
+  .band p{white-space:normal; padding:12px 16px; line-height:1.4}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+"""
+
+
+def _header(home=None):
+    mark = (f"<a class='mark' href='{home}'>DRISHTI</a>" if home
+            else "<span class='mark'>DRISHTI</span>")
+    nav = ("<nav><a href='#what'>What it does</a><a href='#how'>How it works</a>"
+           "<a href='#check'>Check status</a></nav>") if home == "#top" else ""
+    return f"<header class='top'><div class='wrap'>{mark}{nav}</div></header>"
+
+
+def _footer():
+    return ("<footer class='foot'><div class='wrap'>"
+            "<span>DRISHTI. Follow-up visibility for care teams.</span>"
+            "<span>Synthetic data. Administrative use only, not medical advice.</span>"
+            "</div></footer>")
+
+
+def page(title, body, home=None):
+    return (f"<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"
+            f"<meta name='viewport' content='width=device-width, initial-scale=1'>"
+            f"<title>{html.escape(title)}</title><style>{CSS}</style></head>"
+            f"<body id='top'>{_header(home)}{body}{_footer()}</body></html>")
+
+
+def landing_page():
+    body = """
+<div class='wrap'>
+  <div class='hero'>
+    <h1>DRISHTI</h1>
+    <p class='deva'>दृष्टि, meaning sight</p>
+    <p class='caption'>Every follow-up, in sight.</p>
+    <p class='lede'>DRISHTI gives care teams one clear view of which follow-up appointments
+    were missed, how long they have been waiting, and who is responsible for them.</p>
+    <a class='cta' href='#check'>Check a patient</a>
+  </div>
+</div>
+
+<div class='band'><p>Missed visits found early &nbsp;&nbsp;|&nbsp;&nbsp; Every follow-up has an owner &nbsp;&nbsp;|&nbsp;&nbsp; DRISHTI keeps watch</p></div>
+
+<div class='wrap'>
+  <section id='what'>
+    <h2>Nothing slips through the gap</h2>
+    <p class='intro'>Follow-ups get lost between busy shifts and full inboxes. DRISHTI keeps them
+    in one place so the team can see them at a glance.</p>
+    <div class='grid'>
+      <div class='tile'><h3>See what slipped</h3>
+        <p>Missed appointments are listed with the number of days they are overdue, longest wait first.</p></div>
+      <div class='tile'><h3>Know who owns it</h3>
+        <p>Each follow-up is assigned to a named care-team member, so no case is left unclaimed.</p></div>
+      <div class='tile'><h3>Share it as a page</h3>
+        <p>Any patient's status can be opened in a browser or saved as a page to send along.</p></div>
+    </div>
+  </section>
+
+  <section id='how'>
+    <h2>How DRISHTI works</h2>
+    <p class='intro'>Four steps from a spreadsheet of records to a team that knows what to do next.</p>
+    <div class='steps'>
+      <div class='step'><b>1</b><h3>Load the records</h3><p>Patients, follow-ups and care team are read from simple files.</p></div>
+      <div class='step'><b>2</b><h3>Find the overdue</h3><p>Missed appointments are picked out and sorted by days late.</p></div>
+      <div class='step'><b>3</b><h3>Assign an owner</h3><p>Each follow-up is given to one team member.</p></div>
+      <div class='step'><b>4</b><h3>Share the status</h3><p>Anyone can look up a patient ID and see where things stand.</p></div>
+    </div>
+  </section>
+
+  <section class='finder' id='check'>
+    <div class='card'>
+      <h2>Check a follow-up</h2>
+      <p class='sub'>Enter a patient ID to see their appointment status.</p>
+      <form action='/cgi-bin/status.py' method='get'>
+        <input type='text' name='pid' placeholder='For example, P001' aria-label='Patient ID' required>
+        <button type='submit'>Check status</button>
+      </form>
+      <p class='note'>Synthetic data. Administrative use only.</p>
+    </div>
+  </section>
+</div>"""
+    return page("DRISHTI - Every follow-up, in sight", body, home="#top")
+
+
+def status_page(info, back_link=None):
+    e = {k: html.escape(str(v)) for k, v in info.items()}
+    cls = {"Completed": "done", "Missed": "missed"}.get(info["status"], "")
+    late = "late" if info["overdue"] else ""
+    days = f"{e['overdue']} days" if info["overdue"] else "On track"
+    back = f"<a class='back' href='{back_link}'>Search another patient</a>" if back_link else ""
+    body = f"""
+<div class='wrap result'><div class='card'>
+  <h1>{e['name']}</h1>
+  <p class='sub'>Patient {e['id']}</p>
+  <span class='pill {cls}'>{e['status']}</span>
+  <dl>
+    <div class='row'><dt>Scheduled for</dt><dd>{e['date']}</dd></div>
+    <div class='row'><dt>Overdue by</dt><dd class='{late}'>{days}</dd></div>
+    <div class='row'><dt>Assigned to</dt><dd>{e['staff']}</dd></div>
+  </dl>
+  <p class='note'>Synthetic data. Administrative use only.</p>
+  {back}
+</div></div>"""
+    return page("Follow-up status", body, home=back_link)
+
+
+def message_page(msg, back_link=None):
+    back = f"<a class='back' href='{back_link}'>Try another ID</a>" if back_link else ""
+    body = f"<div class='wrap result'><div class='card'><h1>{html.escape(msg)}</h1>{back}</div></div>"
+    return page("DRISHTI", body, home=back_link)
